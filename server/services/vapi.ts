@@ -73,17 +73,17 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
       }
 
-      // Map common voice names to actual Vapi-supported voices from the error message
+      // Use OpenAI voices which are more reliable in Vapi
       const voiceMap: Record<string, string> = {
-        'Rachel': 'rachel-lmnt',
-        'Sarah': 'sarah-lmnt', 
-        'Josh': 'josh-lmnt',
-        'Brian': 'brian-azure',
-        'Nicole': 'alloy-openai',
-        'Emma': 'emma-azure'
+        'Rachel': 'alloy-openai',
+        'Sarah': 'nova-openai', 
+        'Josh': 'onyx-openai',
+        'Brian': 'echo-openai',
+        'Nicole': 'shimmer-openai',
+        'Emma': 'fable-openai'
       };
       
-      const vapiVoice = voiceMap[formattedVoice] || 'rachel-lmnt';
+      const vapiVoice = voiceMap[formattedVoice] || 'alloy-openai';
 
       const payload = {
         name: config.name,
@@ -134,14 +134,14 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       
       if (updates.voice) {
         const voiceMap: Record<string, string> = {
-          'Rachel': 'rachel-lmnt',
-          'Sarah': 'sarah-lmnt', 
-          'Josh': 'josh-lmnt',
-          'Brian': 'brian-azure',
-          'Nicole': 'alloy-openai',
-          'Emma': 'emma-azure'
+          'Rachel': 'alloy-openai',
+          'Sarah': 'nova-openai', 
+          'Josh': 'onyx-openai',
+          'Brian': 'echo-openai',
+          'Nicole': 'shimmer-openai',
+          'Emma': 'fable-openai'
         };
-        formattedUpdates.voice = voiceMap[updates.voice] || 'rachel-lmnt';
+        formattedUpdates.voice = voiceMap[updates.voice] || 'alloy-openai';
       }
       
       if (updates.prompt) {
