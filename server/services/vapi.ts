@@ -28,6 +28,19 @@ export class VapiService {
     }
   }
 
+  private logApiError(operation: string, error: any, requestBody?: any) {
+    console.error(`\n=== VAPI API ERROR - ${operation} ===`);
+    console.error("Status:", error.response?.status);
+    console.error("Status Text:", error.response?.statusText);
+    console.error("Response Data:", JSON.stringify(error.response?.data, null, 2));
+    console.error("Response Headers:", error.response?.headers);
+    if (requestBody) {
+      console.error("Request Body:", JSON.stringify(requestBody, null, 2));
+    }
+    console.error("Full Error:", error.message);
+    console.error("=== END ERROR ===\n");
+  }
+
   buildPrompt(data: PromptData): string {
     const { businessName, greetingMessage, serviceList, faqs } = data;
     
@@ -52,83 +65,140 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async createAgent(config: AgentConfig) {
     try {
+      // Format voice properly for ElevenLabs
+      const formattedVoice = config.voice.startsWith('elevenlabs::') ? 
+        config.voice : `elevenlabs::${config.voice}`;
+
+      // Ensure webhook URL is valid HTTPS
+      if (!config.webhookUrl.startsWith('https://')) {
+        throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
+      }
+
       const payload = {
         name: config.name,
-        prompt: config.prompt,
-        voice: config.voice,
+        prompt: config.prompt.trim(),
+        voice: formattedVoice,
         model: config.model,
-        record: true,
-        webhookUrl: config.webhookUrl,
+        recordingEnabled: true,
+        endCallFunctionEnabled: false,
+        hipaaEnabled: false,
+        clientMessages: ["conversation-update", "function-call", "hang", "model-output", "phonecall-control", "speech-update", "transcript", "tool-calls", "user-interrupted"],
+        serverMessages: ["conversation-update", "end-of-call-report", "function-call", "hang", "phone-call-control", "speech-update", "tool-calls", "transfer-destination-request"],
+        serverUrl: config.webhookUrl,
       };
 
-      console.log("Creating agent with payload:", JSON.stringify(payload, null, 2));
-      console.log("Using API key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
+      console.log("\n=== CREATING VAPI AGENT ===");
+      console.log("Endpoint: POST", `${this.baseUrl}/v1/agents`);
+      console.log("Payload:", JSON.stringify(payload, null, 2));
+      console.log("API Key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
+      console.log("========================\n");
 
-      const response = await axios.post(`${this.baseUrl}/assistant`, payload, {
+      if (!this.apiKey) {
+        throw new Error("VAPI_API_KEY is missing");
+      }
+
+      const response = await axios.post(`${this.baseUrl}/v1/agents`, payload, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
+        timeout: 15000,
       });
 
+      console.log("✓ Agent created successfully:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Vapi API Error:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers
+      this.logApiError("CREATE AGENT", error, {
+        name: config.name,
+        voice: config.voice,
+        model: config.model,
+        webhookUrl: config.webhookUrl
       });
-      throw new Error("Failed to create agent");
+      throw new Error(`Failed to create agent: ${error.response?.data?.message || error.message}`);
     }
   }
 
   async updateAgent(agentId: string, updates: Partial<AgentConfig>) {
     try {
-      const response = await axios.patch(`${this.baseUrl}/assistant/${agentId}`, updates, {
+      const formattedUpdates = { ...updates };
+      if (updates.voice && !updates.voice.startsWith('elevenlabs::')) {
+        formattedUpdates.voice = `elevenlabs::${updates.voice}`;
+      }
+
+      console.log(`\n=== UPDATING VAPI AGENT ${agentId} ===`);
+      console.log("Updates:", JSON.stringify(formattedUpdates, null, 2));
+
+      const response = await axios.patch(`${this.baseUrl}/v1/agents/${agentId}`, formattedUpdates, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
+        timeout: 10000,
       });
 
+      console.log("✓ Agent updated successfully");
       return response.data;
-    } catch (error) {
-      console.error("Error updating agent:", error);
-      throw new Error("Failed to update agent");
+    } catch (error: any) {
+      this.logApiError("UPDATE AGENT", error, { agentId, updates });
+      throw new Error(`Failed to update agent: ${error.response?.data?.message || error.message}`);
     }
   }
 
   async getAgent(agentId: string) {
     try {
-      const response = await axios.get(`${this.baseUrl}/assistant/${agentId}`, {
+      console.log(`\n=== GETTING VAPI AGENT ${agentId} ===`);
+      
+      const response = await axios.get(`${this.baseUrl}/v1/agents/${agentId}`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
         },
+        timeout: 10000,
       });
 
+      console.log("✓ Agent retrieved successfully");
       return response.data;
-    } catch (error) {
-      console.error("Error fetching agent:", error);
-      return null;
+    } catch (error: any) {
+      this.logApiError("GET AGENT", error, { agentId });
+      return null; // Return null for failed agent lookups
     }
   }
 
-  async assignPhoneNumber(agentId: string) {
-    try {
-      const response = await axios.post(`${this.baseUrl}/phone-numbers`, {
-        agentId,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+  async assignPhoneNumber(agentId: string, maxRetries: number = 1) {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        console.log(`\n=== ASSIGNING PHONE NUMBER TO AGENT ${agentId} (Attempt ${attempt}) ===`);
+        
+        const response = await axios.post(`${this.baseUrl}/v1/phone-numbers`, {
+          agentId,
+        }, {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000,
+        });
 
-      return response.data;
-    } catch (error) {
-      console.error("Error assigning phone number:", error);
-      throw new Error("Failed to assign phone number");
+        console.log("✓ Phone number assigned successfully:", response.data);
+        return response.data;
+      } catch (error: any) {
+        lastError = error;
+        this.logApiError(`ASSIGN PHONE NUMBER (Attempt ${attempt})`, error, { agentId });
+        
+        if (attempt <= maxRetries) {
+          console.log(`Retrying in 2 seconds... (${attempt}/${maxRetries} retries)`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
     }
+
+    // If all attempts failed, notify user
+    const errorMessage = `Failed to assign phone number after ${maxRetries + 1} attempts. This may require manual setup in the Vapi dashboard.`;
+    console.error("\n🚨 PHONE NUMBER ASSIGNMENT FAILED 🚨");
+    console.error("You may need to manually assign a phone number in your Vapi dashboard.");
+    console.error("The agent was created successfully but needs a phone number to receive calls.\n");
+    
+    throw new Error(errorMessage);
   }
 }
