@@ -1,0 +1,278 @@
+You are a senior full-stack SaaS engineer tasked with building a production-grade, multi-tenant AI receptionist SaaS platform entirely inside Replit.
+
+Your job is to write all the code for this platform from scratch. This includes agent setup, call handling, lead capture, SMS delivery, call recording storage, a secure multi-user dashboard, and support for user-defined FAQs.
+
+You must build:
+
+A backend using Express.js
+
+A database using Replit Database
+
+Call and voice agent handling via Vapi.ai
+
+SMS notification via Twilio Messaging API
+
+Local file storage for .mp3 recordings using /recordings/
+
+A modern frontend using EJS templating + TailwindCSS
+
+Modular code structure and premium SaaS-level UI
+
+🧱 PROJECT STRUCTURE
+arduino
+Copy
+Edit
+/
+├── .replit
+├── .env
+├── server.js
+├── db.js
+├── routes/
+│   ├── auth.js
+│   ├── webhook.js
+│   ├── dashboard.js
+│   ├── agent.js
+├── views/
+│   ├── layout.ejs
+│   ├── register.ejs
+│   ├── login.ejs
+│   ├── dashboard.ejs
+│   ├── setup.ejs
+│   ├── leads.ejs
+├── public/
+│   ├── tailwind.css
+│   ├── scripts.js
+├── recordings/
+├── utils/
+│   ├── vapi.js
+│   ├── twilio.js
+│   ├── auth.js
+⚙️ ENV VARIABLES
+makefile
+Copy
+Edit
+REPLIT_DB_URL=
+VAPI_API_KEY=
+TWILIO_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_NUMBER=
+SESSION_SECRET=
+🔐 AUTH & USER ONBOARDING
+Implement register/login/logout via Express sessions (or JWT if preferred).
+
+Passwords must be hashed with bcrypt.
+
+User registration must collect:
+
+email
+
+password
+
+business_name
+
+greeting_message
+
+service_list (comma-separated)
+
+preferred_voice
+
+notification_phone (for SMS)
+
+FAQ list (optional JSON block or form repeater fields)
+
+Replit DB: user_{email} format
+json
+Copy
+Edit
+{
+  "email": "demo@example.com",
+  "password": "$2b$10$...", 
+  "business_name": "Sparkle Cleaning",
+  "notification_phone": "+14125551234",
+  "preferred_voice": "Rachel",
+  "greeting_message": "Hi, thanks for calling Sparkle Cleaning!",
+  "service_list": ["Carpet Cleaning", "Window Washing"],
+  "faqs": [
+    { "question": "Do you work weekends?", "answer": "Yes we do." }
+  ],
+  "agent_id": "agent_xyz",
+  "vapi_phone_number": "+18885551234"
+}
+🤖 AGENT SETUP (Vapi)
+When user submits their setup form:
+
+Build this full prompt dynamically:
+
+txt
+Copy
+Edit
+You are the AI receptionist for {{business_name}}.
+Greet callers with: "{{greeting_message}}"
+Ask what service they need from this list: {{service_list}}.
+Collect their name, phone number, zip code, and preferred day/time for service.
+
+If the caller asks any of the following questions, respond exactly as shown:
+
+Q: {{faq_1.question}}
+A: {{faq_1.answer}}
+
+Q: {{faq_2.question}}
+A: {{faq_2.answer}}
+
+If unsure, politely say you’ll have someone follow up shortly.
+Send POST /agents to Vapi API
+
+Include voice, prompt, model: "gpt-4o", record: true, webhook URL
+
+Send POST /phone-numbers to assign number
+
+Store agent_id, vapi_phone_number, prompt, and status in Replit DB
+
+📞 WEBHOOK: POST /webhook
+When Vapi sends a webhook after a call ends:
+
+Extract:
+
+agent_id
+
+lead fields from call.variables
+
+recording_url
+
+optional transcript or summary
+
+Find user by matching agent_id
+
+Download .mp3 recording from recording_url → save as:
+
+bash
+Copy
+Edit
+/recordings/{{user_email}}_{{timestamp}}.mp3
+Create a lead object:
+
+json
+Copy
+Edit
+{
+  "name": "Sarah",
+  "phone": "412-555-1234",
+  "service": "Window Washing",
+  "zip": "15217",
+  "time": "Friday at 2pm",
+  "recording_path": "/recordings/demo@example.com_1723489120.mp3",
+  "timestamp": "2025-06-27T14:00:00Z"
+}
+Append to DB key: leads_{email} (array)
+
+💬 TWILIO SMS ALERT
+After saving the lead:
+
+Format the SMS:
+
+txt
+Copy
+Edit
+📞 New Lead for Sparkle Cleaning:
+Name: Sarah
+Phone: 412-555-1234
+Service: Window Washing
+Time: Friday at 2pm
+Zip: 15217
+🎧 Recording: https://{{your_replit_project}}.replit.app/recordings/demo@example.com_1723489120.mp3
+Send SMS to the notification_phone using Twilio Messaging API
+
+🎧 AUDIO RECORDING ACCESS
+Serve /recordings/* as a static Express route
+
+Ensure file is only accessible if user is logged in and matches the file owner
+
+🎨 FRONTEND PAGES (EJS + Tailwind)
+/register + /login
+Clean form UI
+
+Use full-width inputs, soft shadows, and animated transitions
+
+/setup
+Form fields:
+
+greeting message
+
+service list (tags)
+
+preferred voice (dropdown)
+
+phone number
+
+FAQ (multi-field repeater — question/answer pairs)
+
+Button: Create My AI Receptionist
+
+/dashboard
+Card showing:
+
+Assigned phone number
+
+Call forwarding instructions
+
+Agent status: ✅ Active
+
+/leads
+List all leads:
+
+Name, phone, service, time
+
+<audio> tag for call playback
+
+Optional: show call timestamp
+
+🛡 SECURITY
+Hash all passwords
+
+Validate sessions on all dashboard routes
+
+Match agent_id → user in webhook
+
+Store .env in project for:
+
+VAPI_API_KEY
+
+TWILIO_SID
+
+TWILIO_AUTH_TOKEN
+
+TWILIO_FROM_NUMBER
+
+SESSION_SECRET
+
+Use Replit’s built-in HTTPS and Express static hosting
+
+✅ FINAL DELIVERABLES (Agent Should Output)
+Full server.js to run Express + sessions
+
+Routes for:
+
+GET/POST /register, /login, /setup, /dashboard, /leads, /webhook
+
+Tailwind CSS included in /public/tailwind.css
+
+All views in /views using layout.ejs as master layout
+
+utils/vapi.js: agent/phone creation
+
+utils/twilio.js: SMS wrapper
+
+All logic modular, testable, and commented
+
+🧪 BONUS FEATURES (if time permits)
+Audio transcription display (from Vapi response)
+
+“Favorite leads” flag
+
+Send lead details via email as fallback
+
+Call volume chart on dashboard
+
+Business hours configuration
+
+Build this entire platform in Replit. Keep all logic in a single repo. Use modular code with helper functions, clear route separation, and modern UI/UX best practices. Store all user-specific data under user_{email} and leads_{email} keys.
