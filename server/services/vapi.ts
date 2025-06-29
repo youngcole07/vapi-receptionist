@@ -103,17 +103,31 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         ]
       };
 
+      // Validate prompt length
+      if (payload.prompt.length > 3000) {
+        console.log(`⚠ WARNING: Prompt length ${payload.prompt.length} > 3000 chars, truncating...`);
+        payload.prompt = payload.prompt.substring(0, 3000);
+      }
+
+      // Validate payload structure
       console.log("\n=== CREATING VAPI AGENT ===");
-      console.log("Endpoint: POST", `${this.baseUrl}/v1/agents`);
-      console.log("Payload:", JSON.stringify(payload, null, 2));
+      console.log("Endpoint: POST", `${this.baseUrl}/assistant`);
+      console.log("Full Payload:", JSON.stringify(payload, null, 2));
       console.log("API Key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
+      console.log("Payload Validation:");
+      console.log("- name:", typeof payload.name, payload.name);
+      console.log("- model:", typeof payload.model, payload.model);
+      console.log("- voice:", typeof payload.voice, payload.voice);
+      console.log("- prompt:", typeof payload.prompt, `${payload.prompt.length} chars`);
+      console.log("- record:", typeof payload.record, payload.record);
+      console.log("- tools:", typeof payload.tools, Array.isArray(payload.tools) ? `array[${payload.tools.length}]` : 'not array');
       console.log("========================\n");
 
       if (!this.apiKey) {
         throw new Error("VAPI_API_KEY is missing");
       }
 
-      const response = await axios.post(`${this.baseUrl}/v1/agents`, payload, {
+      const response = await axios.post(`${this.baseUrl}/assistant`, payload, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -124,16 +138,22 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       console.log("✓ Agent created successfully:", response.data);
       return response.data;
     } catch (error: any) {
-      console.log('\n=== VAPI API ERROR ===');
+      console.log('\n🚨 VAPI AGENT SETUP FAILED 🚨');
       console.log('HTTP Status:', error.response?.status);
-      console.log('Response Body:', JSON.stringify(error.response?.data, null, 2));
-      console.log('Request Config:', JSON.stringify({
+      console.log('Status Text:', error.response?.statusText);
+      console.log('Full Response Body:', JSON.stringify(error.response?.data, null, 2));
+      console.log('Full Error Text:', error.message);
+      console.log('Request Config that Failed:', JSON.stringify({
         name: config.name,
         voice: config.voice,
         model: config.model,
         webhookUrl: config.webhookUrl
       }, null, 2));
-      console.log('=====================\n');
+      console.log('Request Headers:', JSON.stringify({
+        'Authorization': this.apiKey ? `Bearer ${this.apiKey.substring(0, 8)}...` : 'MISSING',
+        'Content-Type': 'application/json'
+      }, null, 2));
+      console.log('===============================\n');
       
       this.logApiError("CREATE AGENT", error, {
         name: config.name,
@@ -141,7 +161,9 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         model: config.model,
         webhookUrl: config.webhookUrl
       });
-      throw new Error(`Failed to create agent: ${error.response?.data?.message || error.message}`);
+      
+      // Stop execution immediately, don't retry
+      throw new Error(`Vapi Agent Setup Failed: ${error.response?.status} ${error.response?.statusText} - ${error.response?.data?.message || error.message}`);
     }
   }
 

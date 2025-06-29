@@ -109,10 +109,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Try to assign a phone number automatically
         try {
           const phoneNumberResult = await getVapiService().assignPhoneNumber(agentId);
-          phoneNumber = phoneNumberResult.phone_number || phoneNumberResult.number;
+          phoneNumber = phoneNumberResult.phone_number || phoneNumberResult.number || phoneNumberResult.phoneNumber;
           console.log(`✓ Phone number assigned: ${phoneNumber}`);
         } catch (phoneError) {
-          console.log('⚠ Phone number assignment failed, will need manual assignment');
+          console.log('⚠ Phone number assignment failed, will need manual assignment:', phoneError);
         }
         phoneNumber = user.vapiPhoneNumber || null;
       } else {
