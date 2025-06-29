@@ -36,15 +36,17 @@ export default function Landing() {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600 text-center">
-                    Click below to sign in with your account
-                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-blue-700 text-center">
+                      Sign in will open in a new window for security. Please allow popups and use the preview window for the best experience.
+                    </p>
+                  </div>
                   
                   <Button 
                     onClick={handleLogin}
                     className="w-full bg-primary hover:bg-primary-dark text-white"
                   >
-                    Sign in
+                    Sign in with Your Account
                   </Button>
                 </div>
 
