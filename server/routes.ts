@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth } from "./auth";
 import { VapiService } from "./services/vapi";
 import { TwilioService } from "./services/twilio";
 import { insertLeadSchema, updateUserSchema } from "@shared/schema";
@@ -36,10 +36,10 @@ if (!fs.existsSync(recordingsDir)) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -51,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User profile routes
-  app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  app.put('/api/user/profile', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const userData = updateUserSchema.parse(req.body);
@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Agent setup routes
-  app.post('/api/agent/setup', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agent/setup', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leads routes
-  app.get('/api/leads', isAuthenticated, async (req: any, res) => {
+  app.get('/api/leads', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { search, service, limit = 50, offset = 0 } = req.query;
@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/leads/:id/favorite', isAuthenticated, async (req: any, res) => {
+  app.put('/api/leads/:id/favorite', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const leadId = parseInt(req.params.id);
@@ -273,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Statistics route
-  app.get('/api/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stats', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const stats = await storage.getUserStats(userId);
@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recordings route - secured file serving
-  app.get('/api/recordings/:filename', isAuthenticated, async (req: any, res) => {
+  app.get('/api/recordings/:filename', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const filename = req.params.filename;
@@ -314,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test agent route
-  app.post('/api/agent/test', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agent/test', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
