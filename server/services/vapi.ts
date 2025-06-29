@@ -65,25 +65,34 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async createAgent(config: AgentConfig) {
     try {
-      // Format voice properly for ElevenLabs
-      const formattedVoice = config.voice.startsWith('elevenlabs::') ? 
-        config.voice : `elevenlabs::${config.voice}`;
+      // Use voice as-is, Vapi expects simple voice names like "Rachel"
+      const formattedVoice = config.voice;
 
       // Ensure webhook URL is valid HTTPS
       if (!config.webhookUrl.startsWith('https://')) {
         throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
       }
 
+      // Map common voice names to Vapi format
+      const voiceMap: Record<string, string> = {
+        'Rachel': 'rachel-eleven-labs',
+        'Sarah': 'sarah-eleven-labs', 
+        'Josh': 'josh-eleven-labs',
+        'Brian': 'brian-eleven-labs',
+        'Nicole': 'nicole-eleven-labs'
+      };
+      
+      const vapiVoice = voiceMap[formattedVoice] || 'rachel-eleven-labs';
+
       const payload = {
         name: config.name,
-        prompt: config.prompt.trim(),
-        voice: formattedVoice,
-        model: config.model,
+        model: {
+          provider: 'openai',
+          model: config.model,
+          systemPrompt: config.prompt.trim(),
+        },
+        voice: vapiVoice,
         recordingEnabled: true,
-        endCallFunctionEnabled: false,
-        hipaaEnabled: false,
-        clientMessages: ["conversation-update", "function-call", "hang", "model-output", "phonecall-control", "speech-update", "transcript", "tool-calls", "user-interrupted"],
-        serverMessages: ["conversation-update", "end-of-call-report", "function-call", "hang", "phone-call-control", "speech-update", "tool-calls", "transfer-destination-request"],
         serverUrl: config.webhookUrl,
       };
 
@@ -120,9 +129,25 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async updateAgent(agentId: string, updates: Partial<AgentConfig>) {
     try {
-      const formattedUpdates = { ...updates };
-      if (updates.voice && !updates.voice.startsWith('elevenlabs::')) {
-        formattedUpdates.voice = `elevenlabs::${updates.voice}`;
+      const formattedUpdates: any = {};
+      
+      if (updates.voice) {
+        const voiceMap: Record<string, string> = {
+          'Rachel': 'rachel-eleven-labs',
+          'Sarah': 'sarah-eleven-labs', 
+          'Josh': 'josh-eleven-labs',
+          'Brian': 'brian-eleven-labs',
+          'Nicole': 'nicole-eleven-labs'
+        };
+        formattedUpdates.voice = voiceMap[updates.voice] || 'rachel-eleven-labs';
+      }
+      
+      if (updates.prompt) {
+        formattedUpdates.model = {
+          provider: 'openai',
+          model: 'gpt-4o',
+          systemPrompt: updates.prompt.trim(),
+        };
       }
 
       console.log(`\n=== UPDATING VAPI AGENT ${agentId} ===`);
