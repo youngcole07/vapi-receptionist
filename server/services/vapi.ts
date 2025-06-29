@@ -111,7 +111,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
       // Validate payload structure
       console.log("\n=== CREATING VAPI AGENT ===");
-      console.log("Endpoint: POST", `${this.baseUrl}/assistants`);
+      console.log("Endpoint: POST", `${this.baseUrl}/assistant`);
       console.log("Full Payload:", JSON.stringify(payload, null, 2));
       console.log("API Key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
       console.log("Payload Validation:");
@@ -127,7 +127,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         throw new Error("VAPI_API_KEY is missing");
       }
 
-      const response = await axios.post(`${this.baseUrl}/assistants`, payload, {
+      const response = await axios.post(`${this.baseUrl}/assistant`, payload, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
