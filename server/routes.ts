@@ -98,17 +98,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!agentId) {
         // Create new agent
         const agent = await getVapiService().createAgent({
-          name: `${user.businessName} AI Receptionist`,
+          name: `${user.businessName || "Your Business"} AI Receptionist`,
           prompt,
           voice: preferredVoice,
           model: "gpt-4o",
-          webhookUrl: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/api/webhook/vapi`,
+          webhookUrl: `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/api/webhook/vapi`,
         });
         agentId = agent.id;
 
-        // Assign phone number
-        const phone = await getVapiService().assignPhoneNumber(agentId);
-        phoneNumber = phone.number;
+        // Phone number assignment might need to be done manually in Vapi dashboard
+        // For now, we'll leave this as a manual step
+        phoneNumber = user.vapiPhoneNumber || null;
       } else {
         // Update existing agent
         await getVapiService().updateAgent(agentId, {

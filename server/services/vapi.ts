@@ -64,7 +64,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       console.log("Creating agent with payload:", JSON.stringify(payload, null, 2));
       console.log("Using API key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
 
-      const response = await axios.post(`${this.baseUrl}/agent`, payload, {
+      const response = await axios.post(`${this.baseUrl}/assistant`, payload, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async updateAgent(agentId: string, updates: Partial<AgentConfig>) {
     try {
-      const response = await axios.patch(`${this.baseUrl}/agents/${agentId}`, updates, {
+      const response = await axios.patch(`${this.baseUrl}/assistant/${agentId}`, updates, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async getAgent(agentId: string) {
     try {
-      const response = await axios.get(`${this.baseUrl}/agents/${agentId}`, {
+      const response = await axios.get(`${this.baseUrl}/assistant/${agentId}`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
         },
