@@ -87,20 +87,22 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
       const payload = {
         name: config.name,
-        model: config.model,
+        model: {
+          provider: 'openai',
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: config.prompt.trim()
+            }
+          ]
+        },
         voice: {
           provider: 'openai',
-          voice_id: voiceId
+          voiceId: voiceId
         },
-        prompt: config.prompt.trim(),
-        record: true,
-        tools: [
-          {
-            type: 'webhook',
-            url: config.webhookUrl,
-            method: 'POST'
-          }
-        ]
+        recordingEnabled: true,
+        serverUrl: config.webhookUrl
       };
 
       // Validate prompt length
