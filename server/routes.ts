@@ -10,8 +10,23 @@ import path from "path";
 import axios from "axios";
 import multer from "multer";
 
-const vapiService = new VapiService();
-const twilioService = new TwilioService();
+// Initialize services lazily to ensure environment variables are loaded
+let vapiService: VapiService | null = null;
+let twilioService: TwilioService | null = null;
+
+function getVapiService() {
+  if (!vapiService) {
+    vapiService = new VapiService();
+  }
+  return vapiService;
+}
+
+function getTwilioService() {
+  if (!twilioService) {
+    twilioService = new TwilioService();
+  }
+  return twilioService;
+}
 
 // Configure multer for file uploads (recordings)
 const recordingsDir = path.join(process.cwd(), "recordings");
@@ -69,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Build dynamic prompt
-      const prompt = vapiService.buildPrompt({
+      const prompt = getVapiService().buildPrompt({
         businessName: user.businessName || "Your Business",
         greetingMessage,
         serviceList,
@@ -82,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!agentId) {
         // Create new agent
-        const agent = await vapiService.createAgent({
+        const agent = await getVapiService().createAgent({
           name: `${user.businessName} AI Receptionist`,
           prompt,
           voice: preferredVoice,
@@ -92,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         agentId = agent.id;
 
         // Assign phone number
-        const phone = await vapiService.assignPhoneNumber(agentId);
+        const phone = await getVapiService().assignPhoneNumber(agentId);
         phoneNumber = phone.number;
       } else {
         // Update existing agent

@@ -20,9 +20,11 @@ export class VapiService {
   private baseUrl = 'https://api.vapi.ai';
 
   constructor() {
-    this.apiKey = process.env.VAPI_API_KEY || process.env.VAPI_API_KEY_ENV_VAR || "";
+    this.apiKey = process.env.VAPI_API_KEY || "";
+    console.log("VAPI API Key loaded:", this.apiKey ? "✓ Present" : "✗ Missing");
     if (!this.apiKey) {
       console.warn("VAPI_API_KEY not found in environment variables");
+      console.log("Available env vars:", Object.keys(process.env).filter(key => key.includes('VAPI')));
     }
   }
 
@@ -50,14 +52,19 @@ Collect their name, phone number, zip code, and preferred day/time for service.
 
   async createAgent(config: AgentConfig) {
     try {
-      const response = await axios.post(`${this.baseUrl}/agents`, {
+      const payload = {
         name: config.name,
         prompt: config.prompt,
         voice: config.voice,
         model: config.model,
         record: true,
         webhookUrl: config.webhookUrl,
-      }, {
+      };
+
+      console.log("Creating agent with payload:", JSON.stringify(payload, null, 2));
+      console.log("Using API key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
+
+      const response = await axios.post(`${this.baseUrl}/agent`, payload, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -65,8 +72,13 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       });
 
       return response.data;
-    } catch (error) {
-      console.error("Error creating agent:", error);
+    } catch (error: any) {
+      console.error("Vapi API Error:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
       throw new Error("Failed to create agent");
     }
   }
