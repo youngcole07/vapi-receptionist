@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phoneNumber = phone.number;
       } else {
         // Update existing agent
-        await vapiService.updateAgent(agentId, {
+        await getVapiService().updateAgent(agentId, {
           prompt,
           voice: preferredVoice,
         });
@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send SMS notification
       if (user.notificationPhone) {
-        const smsMessage = twilioService.formatLeadSMS({
+        const smsMessage = getTwilioService().formatLeadSMS({
           businessName: user.businessName || "Your Business",
           leadName: lead.name,
           leadPhone: lead.phone,
@@ -211,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             null,
         });
 
-        await twilioService.sendSMS(user.notificationPhone, smsMessage);
+        await getTwilioService().sendSMS(user.notificationPhone, smsMessage);
       }
 
       // Log the call
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // This would typically trigger a test call via Vapi
       // For now, we'll just confirm the agent exists
-      const agentExists = await vapiService.getAgent(user.agentId);
+      const agentExists = await getVapiService().getAgent(user.agentId);
       
       res.json({ 
         message: "Agent test initiated", 
