@@ -73,17 +73,17 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
       }
 
-      // Map to OpenAI voice IDs (just the voice name, not provider-voice format)
+      // Use the exact voice names from Vapi's supported list
       const voiceMap: Record<string, string> = {
-        'Rachel': 'alloy',
-        'Sarah': 'nova', 
-        'Josh': 'onyx',
-        'Brian': 'echo',
-        'Nicole': 'shimmer',
-        'Emma': 'fable'
+        'Rachel': 'alloy-openai',
+        'Sarah': 'nova-openai', 
+        'Josh': 'onyx-openai',
+        'Brian': 'echo-openai',
+        'Nicole': 'shimmer-openai',
+        'Emma': 'fable-openai'
       };
       
-      const voiceId = voiceMap[formattedVoice] || 'alloy';
+      const voiceId = voiceMap[formattedVoice] || 'alloy-openai';
 
       const payload = {
         name: config.name,
@@ -97,10 +97,7 @@ Collect their name, phone number, zip code, and preferred day/time for service.
             }
           ]
         },
-        voice: {
-          provider: 'openai',
-          voiceId: voiceId
-        },
+        voice: voiceId,
         recordingEnabled: true,
         serverUrl: config.webhookUrl,
       };
@@ -142,17 +139,14 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       
       if (updates.voice) {
         const voiceMap: Record<string, string> = {
-          'Rachel': 'alloy',
-          'Sarah': 'nova', 
-          'Josh': 'onyx',
-          'Brian': 'echo',
-          'Nicole': 'shimmer',
-          'Emma': 'fable'
+          'Rachel': 'alloy-openai',
+          'Sarah': 'nova-openai', 
+          'Josh': 'onyx-openai',
+          'Brian': 'echo-openai',
+          'Nicole': 'shimmer-openai',
+          'Emma': 'fable-openai'
         };
-        formattedUpdates.voice = {
-          provider: 'openai',
-          voiceId: voiceMap[updates.voice] || 'alloy'
-        };
+        formattedUpdates.voice = voiceMap[updates.voice] || 'alloy-openai';
       }
       
       if (updates.prompt) {
