@@ -101,7 +101,8 @@ Collect their name, phone number, zip code, and preferred day/time for service.
           provider: 'deepgram',
           model: 'nova-2',
           language: 'en'
-        }
+        },
+        serverUrl: config.webhookUrl
       };
 
       console.log("\n=== CREATING VAPI AGENT ===");
