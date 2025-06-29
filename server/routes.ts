@@ -106,8 +106,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         agentId = agent.id;
 
-        // Phone number assignment might need to be done manually in Vapi dashboard
-        // For now, we'll leave this as a manual step
+        // Try to assign a phone number automatically
+        try {
+          const phoneNumberResult = await getVapiService().assignPhoneNumber(agentId);
+          phoneNumber = phoneNumberResult.phone_number || phoneNumberResult.number;
+          console.log(`✓ Phone number assigned: ${phoneNumber}`);
+        } catch (phoneError) {
+          console.log('⚠ Phone number assignment failed, will need manual assignment');
+        }
         phoneNumber = user.vapiPhoneNumber || null;
       } else {
         // Update existing agent

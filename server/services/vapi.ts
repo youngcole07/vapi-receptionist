@@ -73,33 +73,34 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
       }
 
-      // Use the exact voice names from Vapi's supported list
+      // Map to OpenAI voice IDs for the voice object
       const voiceMap: Record<string, string> = {
-        'Rachel': 'alloy-openai',
-        'Sarah': 'nova-openai', 
-        'Josh': 'onyx-openai',
-        'Brian': 'echo-openai',
-        'Nicole': 'shimmer-openai',
-        'Emma': 'fable-openai'
+        'Rachel': 'alloy',
+        'Sarah': 'nova', 
+        'Josh': 'onyx',
+        'Brian': 'echo',
+        'Nicole': 'shimmer',
+        'Emma': 'fable'
       };
       
-      const voiceId = voiceMap[formattedVoice] || 'alloy-openai';
+      const voiceId = voiceMap[formattedVoice] || 'alloy';
 
       const payload = {
         name: config.name,
-        model: {
+        model: config.model,
+        voice: {
           provider: 'openai',
-          model: config.model,
-          messages: [
-            {
-              role: 'system',
-              content: config.prompt.trim()
-            }
-          ]
+          voice_id: voiceId
         },
-        voice: voiceId,
-        recordingEnabled: true,
-        serverUrl: config.webhookUrl,
+        prompt: config.prompt.trim(),
+        record: true,
+        tools: [
+          {
+            type: 'webhook',
+            url: config.webhookUrl,
+            method: 'POST'
+          }
+        ]
       };
 
       console.log("\n=== CREATING VAPI AGENT ===");
@@ -123,6 +124,17 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       console.log("✓ Agent created successfully:", response.data);
       return response.data;
     } catch (error: any) {
+      console.log('\n=== VAPI API ERROR ===');
+      console.log('HTTP Status:', error.response?.status);
+      console.log('Response Body:', JSON.stringify(error.response?.data, null, 2));
+      console.log('Request Config:', JSON.stringify({
+        name: config.name,
+        voice: config.voice,
+        model: config.model,
+        webhookUrl: config.webhookUrl
+      }, null, 2));
+      console.log('=====================\n');
+      
       this.logApiError("CREATE AGENT", error, {
         name: config.name,
         voice: config.voice,
@@ -202,9 +214,14 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       try {
         console.log(`\n=== ASSIGNING PHONE NUMBER TO AGENT ${agentId} (Attempt ${attempt}) ===`);
         
-        const response = await axios.post(`${this.baseUrl}/v1/phone-numbers`, {
-          agentId,
-        }, {
+        const payload = {
+          agent_id: agentId
+        };
+        
+        console.log('Endpoint: POST', `${this.baseUrl}/phone-numbers`);
+        console.log('Payload:', JSON.stringify(payload, null, 2));
+        
+        const response = await axios.post(`${this.baseUrl}/phone-numbers`, payload, {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
@@ -216,6 +233,11 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         return response.data;
       } catch (error: any) {
         lastError = error;
+        console.log('\n=== PHONE NUMBER ASSIGNMENT ERROR ===');
+        console.log('HTTP Status:', error.response?.status);
+        console.log('Response Body:', JSON.stringify(error.response?.data, null, 2));
+        console.log('=======================================\n');
+        
         this.logApiError(`ASSIGN PHONE NUMBER (Attempt ${attempt})`, error, { agentId });
         
         if (attempt <= maxRetries) {
