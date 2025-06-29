@@ -1,0 +1,123 @@
+MODEL
+
+Model
+Configure the behavior of the assistant.
+
+Provider
+
+OpenAI
+Model
+
+GPT 4o Cluster
+First Message Mode
+
+Assistant speaks first
+First Message
+System Prompt
+Generate
+Add your prompt here...
+Files
+Max Tokens
+250
+Temperature
+0.5
+VOICE
+
+Voice Configuration
+Select a voice from the list, or sync your voice library if it's missing. If errors persist, enable custom voice and add a voice ID.
+
+Provider
+
+Vapi
+Voice
+
+Add Voice ID Manually
+Model
+This is the model that will be used.
+
+
+Select Model
+
+Additional Configuration
+Configure additional settings for the voice of your assistant.
+
+TRANSCRIBER
+
+Transcriber
+This section allows you to configure the transcription settings for the assistant.
+
+Provider
+
+Deepgram
+Language
+En
+Pro tip: If you want to support both English and Spanish, you can set the language to multi and use ElevenLabs Turbo 2.5 in the Voice tab.
+
+Model
+
+Nova 2
+Background Denoising Enabled
+Filter background noise while the user is talking.
+
+
+Confidence Threshold
+Transcripts with a confidence score below this threshold will be filtered out.
+
+0
+1.0
+0.4
+Use Numerals
+Convert numbers from words to digits in transcription.
+
+
+TOOLS
+
+Tools
+Tools enable voicebots to perform actions during calls. Add tools from the Tools Library to connect with Make.com or GHL workflows, or create custom tools with your backend.
+
+
+Predefined Functions
+We've pre-built functions for common use cases. You can enable them and configure them below.
+
+
+Custom Functions
+Define your custom functions here to enhance your assistant's capabilities. You can use your own code or tools like Pipedream or Make for the setup.
+
+ANALYSIS
+
+Summary
+This is the prompt that's used to summarize the call. The output is stored in call.analysis.summary. You can also find the summary in the Call Logs Page.
+
+Prompt
+You are an expert note-taker. You will be given a transcript of a call. Summarize the call in 2-3 sentences, if applicable.
+Summary request timeout in seconds.
+10
+1 (sec)
+60 (sec)
+Minimum number of messages to trigger analysis.
+2
+0
+10
+
+Success Evaluation
+Evaluate if your call was successful. You can use Rubric standalone or in combination with Success Evaluation Prompt. If both are provided, they are concatenated into appropriate instructions.
+
+
+Structured Data
+Extract structured data from call conversation. You can use Data Schema standalone or in combination with Structured Data Prompt. If both are provided, they are concatenated into appropriate instructions.
+
+ADVANCED
+
+Privacy
+This section allows you to configure the privacy settings for the assistant.
+
+
+Start Speaking Plan
+This is the plan for when the assistant should start talking.
+
+
+Voicemail Detection
+Configure how the assistant detects and handles voicemail.
+
+Voicemail Detection Provider
+Vapi uses advanced AI for detection. Google/OpenAI use simpler models. Twilio uses traditional AMD.

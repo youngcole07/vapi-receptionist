@@ -90,39 +90,24 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         model: {
           provider: 'openai',
           model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: config.prompt.trim()
-            }
-          ]
+          systemPrompt: config.prompt.trim(),
+          maxTokens: 250,
+          temperature: 0.5
         },
         voice: {
-          provider: 'openai',
-          voiceId: voiceId
+          provider: 'vapi'
         },
-        recordingEnabled: true,
-        serverUrl: config.webhookUrl
+        transcriber: {
+          provider: 'deepgram',
+          model: 'nova-2',
+          language: 'en'
+        }
       };
 
-      // Validate prompt length
-      if (payload.prompt.length > 3000) {
-        console.log(`⚠ WARNING: Prompt length ${payload.prompt.length} > 3000 chars, truncating...`);
-        payload.prompt = payload.prompt.substring(0, 3000);
-      }
-
-      // Validate payload structure
       console.log("\n=== CREATING VAPI AGENT ===");
       console.log("Endpoint: POST", `${this.baseUrl}/assistant`);
       console.log("Full Payload:", JSON.stringify(payload, null, 2));
       console.log("API Key:", this.apiKey ? `${this.apiKey.substring(0, 8)}...` : "MISSING");
-      console.log("Payload Validation:");
-      console.log("- name:", typeof payload.name, payload.name);
-      console.log("- model:", typeof payload.model, payload.model);
-      console.log("- voice:", typeof payload.voice, payload.voice);
-      console.log("- prompt:", typeof payload.prompt, `${payload.prompt.length} chars`);
-      console.log("- record:", typeof payload.record, payload.record);
-      console.log("- tools:", typeof payload.tools, Array.isArray(payload.tools) ? `array[${payload.tools.length}]` : 'not array');
       console.log("========================\n");
 
       if (!this.apiKey) {
