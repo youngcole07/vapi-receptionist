@@ -32,9 +32,11 @@ interface AgentSetupFormProps {
 
 const voices = [
   { value: "Rachel", label: "Rachel (Female, Professional)" },
-  { value: "Daniel", label: "Daniel (Male, Friendly)" },
+  { value: "Josh", label: "Josh (Male, Friendly)" },
   { value: "Emma", label: "Emma (Female, Warm)" },
   { value: "Brian", label: "Brian (Male, Professional)" },
+  { value: "Sarah", label: "Sarah (Female, Conversational)" },
+  { value: "Nicole", label: "Nicole (Female, Clear)" },
 ];
 
 export default function AgentSetupForm({ 

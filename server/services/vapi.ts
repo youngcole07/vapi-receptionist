@@ -73,26 +73,34 @@ Collect their name, phone number, zip code, and preferred day/time for service.
         throw new Error(`Invalid webhook URL: ${config.webhookUrl}. Must be HTTPS.`);
       }
 
-      // Use OpenAI voices which are more reliable in Vapi
+      // Map to OpenAI voice IDs (just the voice name, not provider-voice format)
       const voiceMap: Record<string, string> = {
-        'Rachel': 'alloy-openai',
-        'Sarah': 'nova-openai', 
-        'Josh': 'onyx-openai',
-        'Brian': 'echo-openai',
-        'Nicole': 'shimmer-openai',
-        'Emma': 'fable-openai'
+        'Rachel': 'alloy',
+        'Sarah': 'nova', 
+        'Josh': 'onyx',
+        'Brian': 'echo',
+        'Nicole': 'shimmer',
+        'Emma': 'fable'
       };
       
-      const vapiVoice = voiceMap[formattedVoice] || 'alloy-openai';
+      const voiceId = voiceMap[formattedVoice] || 'alloy';
 
       const payload = {
         name: config.name,
         model: {
           provider: 'openai',
           model: config.model,
-          systemPrompt: config.prompt.trim(),
+          messages: [
+            {
+              role: 'system',
+              content: config.prompt.trim()
+            }
+          ]
         },
-        voice: vapiVoice,
+        voice: {
+          provider: 'openai',
+          voiceId: voiceId
+        },
         recordingEnabled: true,
         serverUrl: config.webhookUrl,
       };
@@ -134,14 +142,17 @@ Collect their name, phone number, zip code, and preferred day/time for service.
       
       if (updates.voice) {
         const voiceMap: Record<string, string> = {
-          'Rachel': 'alloy-openai',
-          'Sarah': 'nova-openai', 
-          'Josh': 'onyx-openai',
-          'Brian': 'echo-openai',
-          'Nicole': 'shimmer-openai',
-          'Emma': 'fable-openai'
+          'Rachel': 'alloy',
+          'Sarah': 'nova', 
+          'Josh': 'onyx',
+          'Brian': 'echo',
+          'Nicole': 'shimmer',
+          'Emma': 'fable'
         };
-        formattedUpdates.voice = voiceMap[updates.voice] || 'alloy-openai';
+        formattedUpdates.voice = {
+          provider: 'openai',
+          voiceId: voiceMap[updates.voice] || 'alloy'
+        };
       }
       
       if (updates.prompt) {
